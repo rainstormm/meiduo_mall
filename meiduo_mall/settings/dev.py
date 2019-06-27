@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/1.11/ref/settings/
 import datetime
 import os  # 操作系统ubuntu模块
 import sys  # python模块
+from datetime import timedelta
 
 # sys.path#导入包的路径
 
@@ -49,6 +50,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
+
+    'corsheaders',
     'rest_framework',
     'django_crontab',  # 定时任务
 
@@ -68,7 +71,11 @@ INSTALLED_APPS = [
 
 ]
 
+
 MIDDLEWARE = [
+    # 第一行注册
+    # 作用响应跨域请求询问
+    'corsheaders.middleware.CorsMiddleware',
 
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -105,14 +112,14 @@ WSGI_APPLICATION = 'meiduo_mall.wsgi.application'
 # https://docs.djangoproject.com/en/1.11/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',  # 数据库引擎
-        'HOST': '192.168.203.151',  # 数据库主机
+     'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'HOST': '127.0.0.1',  # 数据库主机
         'PORT': 3306,  # 数据库端口
-        'USER': 'weiwei',  # 数据库用户名
-        'PASSWORD': '12345',  # 数据库用户密码
-        'NAME': 'meiduo_mall_db'  # 数据库名字
-    },
+        'USER': 'root',  # 数据库用户名
+        'PASSWORD': 'mysql',  # 数据库用户密码
+        'NAME': 'meiduo_mall_db'  # 数据库名字,
+     }
     # 'slave': {
     #     'ENGINE': 'django.db.backends.mysql',  # 数据库引擎
     #     'HOST': '192.168.203.151',  # 数据库主机
@@ -173,42 +180,42 @@ STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
 CACHES = {
     "default": {  # 默认
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://192.168.203.151:6379/0",  # 可改：ip、port、db
+        "LOCATION": "redis://127.0.0.1:6379/0",  # 可改：ip、port、db
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         }
     },
     "session": {  # session
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://192.168.203.151:6379/1",
+        "LOCATION": "redis://127.0.0.1:6379/1",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         }
     },
     "image_code": {  # 图形验证码
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://192.168.203.151:6379/2",
+        "LOCATION": "redis://127.0.0.1:6379/2",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         }
     },
     "sms_code": {  # 短信验证码
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://192.168.203.151:6379/3",
+        "LOCATION": "redis://127.0.0.1:6379/3",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         }
     },
     "history": {  # 浏览记录
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://192.168.203.151:6379/4",
+        "LOCATION": "redis://127.0.0.1:6379/4",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         }
     },
     "cart": {  # 购物车
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://192.168.203.151:6379/5",
+        "LOCATION": "redis://127.0.0.1:6379/5",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         }
@@ -264,7 +271,7 @@ LOGGING = {
 AUTH_USER_MODEL = 'users.User'  # 应用名称.模型类名称
 
 # 指定认证后端
-
+# phone numbers and username can be both used to login
 AUTHENTICATION_BACKENDS = [
     'meiduo_mall.utils.authenticate.MeiduoModelBackend',
 ]
@@ -319,4 +326,52 @@ CRONJOBS = [
      '>> ' + os.path.join(os.path.dirname(BASE_DIR), 'logs/crontab.log'))
 ]
 CRONTAB_COMMAND_PREFIX = 'LANG_ALL=zh_cn.UTF-8'  # 支持中文
+
+
+
+
+
+# 允许哪些域名，跨域访问django后端8000
+# 跨域白名单
+CORS_ORIGIN_WHITELIST = (
+     'http://127.0.0.1:8080',
+    'http://127.0.0.1:8000',
+    'http://localhost:8080',
+    'http://www.meiduo.site:8080',
+    'http://api.meiduo.site:800'
+)
+CORS_ALLOW_CREDENTIALS = True  # 允许携带cookie
+
+
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_jwt.authentication.JSONWebTokenAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+        'rest_framework.authentication.BasicAuthentication',
+    ),
+}
+
+
+# 有效期
+# 时间点：2019-7-7 0：0：0
+# 时间段：30天  --> 当前的时间点 + 30天 = 有效期时间点
+
+# python
+# datetime：时间点对象
+# timedelta：时间段对象
+# datetime(2019, 1,1, 12,14,45)
+# timedelta(days=20, seconds=50)
+
+JWT_AUTH = {
+    'JWT_EXPIRATION_DELTA': timedelta(days=1), # 有效期为1天
+    'JWT_RESPONSE_PAYLOAD_HANDLER': 'meiduo_admin.jwt_reponses.jwt_response_handler.custom_jwt_response_handler',
+}
+
+
+
+FDFS_CONFIG_PATH=os.path.join(BASE_DIR, 'client.conf')
+
+
+
 

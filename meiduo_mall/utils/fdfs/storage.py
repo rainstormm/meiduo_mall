@@ -10,4 +10,4 @@ class FdfsStorage(Storage):
         pass
 
     def url(self, name):
-        return settings.FDFS_URL + name
+        return 'http://192.168.255.139:8888/' + name

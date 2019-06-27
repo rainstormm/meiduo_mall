@@ -17,6 +17,9 @@ class MeiduoModelBackend(ModelBackend):
             except:
                 return None
 
+        if request==None:
+            if not user.is_staff:
+                return None
 
         # 判断密码
         if user.check_password(password):
